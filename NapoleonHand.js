@@ -120,7 +120,7 @@ export default class NapoleonHand {
         return true;
     }
     checkIsGroup(valueNum) {
-        this.cards[valueNum][4] = this.cards[valueNum][0] === this.cards[valueNum][1] === this.cards[valueNum][2] === this.cards[valueNum][3];
+        this.cards[valueNum][4] = this.cards[valueNum][0] && this.cards[valueNum][1] && this.cards[valueNum][2] && this.cards[valueNum][3];
     }
     addCard(card) {
         let parsedCard = this.parseCard(card);
@@ -165,7 +165,7 @@ export default class NapoleonHand {
         return cardsList;
     }
     cardInEnglish(card) {
-        if (this.allAreGroups) {
+        if (this.hasGroup(card.value)) {
             let pluralValues = ["Aces", "Twos", "Threes", "Fours", "Fives", "Sixes", "Sevens", "Eights", "Nines", "Tens", "Jacks", "Queens", "Kings"];
             let valueNum = this.parseValue(card.value);
             return `all the ${pluralValues[valueNum - 1]}`;

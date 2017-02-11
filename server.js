@@ -53,12 +53,9 @@ io.sockets.on("connection", (socket) => {
                 break;
             }
             case "s/message": {
-                socket.broadcast.emit("action", {
+                io.emit("action", {
                     type: "NEW_MESSAGE",
-                    data: {
-                        sender: players.get(socket),
-                        content: action.data
-                    }
+                    data: action.data
                 });
             }
         }

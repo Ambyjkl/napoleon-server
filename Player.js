@@ -8,6 +8,7 @@ export default class Player {
         });
         this.lost = false;
         this.won = false;
+        this.handHidden = false;
     }
     checkDidLose() {
         let status = this.hand.size === 0;
@@ -18,5 +19,13 @@ export default class Player {
         let status = this.hand.size === 52;
         this.won = status;
         return status;
+    }
+    fetchData() {
+        return {
+            allAreGroups: this.hand.allAreGroups,
+            lost: this.lost,
+            myHand: this.hand.showCards(),
+            won: this.won
+        };
     }
 }

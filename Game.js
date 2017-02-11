@@ -47,16 +47,25 @@ export default class Game {
     }
     fetchData(playerName) {
         let player = this.playerMap.get(playerName);
-        let r = {
-            allAreGroups: player.hand.allAreGroups,
+        let r = player.fetchData();
+        let myHand;
+        if (player.handHidden === false) {
+            if (player.hand.allAreGroups) {
+                player.handHidden = true;
+            }
+            myHand = player.hand.showCards();
+        } else {
+            myHand = [];
+        }
+        r = {
+            ...r,
             currentPlayer: this.currentPlayerName,
             gameLog: this.gameLog,
-            lost: player.lost,
-            myHand: player.hand.showCards(),
-            players: Array.from(this.playerMap.keys()).filter(player => !this.playerMap.get(player).lost && player != playerName),
-            won: player.won
+            gameOver: Array.from(this.playerMap.values()).reduce((acc, p) => acc && (p.won || p.lost), true),
+            myHand,
+            players: Array.from(this.playerMap.keys()).filter(player => !this.playerMap.get(player).lost && player != playerName)
         };
-        // console.log(r);
+        console.log(r);
         return r;
     }
     attemptTrade(currentPlayer, targetPlayer, card) {
@@ -64,18 +73,17 @@ export default class Game {
             if (targetPlayer.hand.hasGroup(card.value)) {
                 targetPlayer.hand.removeGroup(card.value);
                 currentPlayer.hand.addGroup(card.value);
-                return true;
+                return 1;
             }
-            return false;
+            return 0;
         } else {
+            if (!currentPlayer.hand.hasOneOfGroup(card.value)) return -1;
             if (targetPlayer.hand.hasCard(card)) {
-                if (!currentPlayer.hand.hasOneOfGroup(card.value)) return false;
                 targetPlayer.hand.removeCard(card);
                 currentPlayer.hand.addCard(card);
-                console.log("saras");
-                return true;
+                return 1;
             }
-            return false;
+            return 0;
         }
     }
     turn(data) {
@@ -88,18 +96,29 @@ export default class Game {
         --------
         `);
         console.log(data);
-        let currentPlayer = this.playerMap.get(this.currentPlayerName);
-        let targetPlayer = this.playerMap.get(data.target);
-        let success = this.attemptTrade(currentPlayer, targetPlayer, data.card);
-        if (success) {
-            targetPlayer.checkDidLose();
-            currentPlayer.checkDidWin();
-            this.gameLog = [...this.gameLog, `${this.currentPlayerName} took ${targetPlayer.hand.cardInEnglish(data.card)} from ${data.target}!`];
+        const currentPlayer = this.playerMap.get(this.currentPlayerName);
+        const targetPlayer = this.playerMap.get(data.target);
+        const targetCardName = targetPlayer.hand.cardInEnglish(data.card);
+        const success = this.attemptTrade(currentPlayer, targetPlayer, data.card);
+        if (success === 1) {
+            const targetLost = targetPlayer.checkDidLose();
+            const sourceWon = currentPlayer.checkDidWin();
+            this.gameLog = [...this.gameLog, `${this.currentPlayerName} took ${targetCardName} from ${data.target}! ${targetLost ? `${data.target} lost!` : ""} ${sourceWon ? `${this.currentPlayerName} won!` : ""}`];
             // return this.gameLog;
         } else {
-            this.gameLog = [...this.gameLog, `${this.currentPlayerName} tried to take ${targetPlayer.hand.cardInEnglish(data.card)} from ${data.target}, but failed!`];
+            if (success === 0) {
+                this.gameLog = [...this.gameLog, `${this.currentPlayerName} tried to take ${targetCardName} from ${data.target}, but failed!`];
+                // return this.gameLog;
+            } else {
+                this.gameLog = [...this.gameLog, `${this.currentPlayerName} tried to take ${targetCardName} from ${data.target}, but failed! (you need at least one card of that value)`];
+            }
             this.currentPlayerName = data.target;
-            // return this.gameLog;
         }
+        console.log(`
+        After
+        -----
+        `);
+        console.log("source: ", currentPlayer.fetchData());
+        console.log("target: ", targetPlayer.fetchData());
     }
 }
