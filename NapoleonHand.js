@@ -3,6 +3,10 @@ export default class NapoleonHand {
         this.cards = props.cards;
         this.size = props.size;
         this.allAreGroups = false;
+        for (let i = 0; i < 13; ++i) {
+            this.checkIsGroup(i);
+        }
+        this.checkAllAreGroups();
     }
     unparseCard(valueNum, suitNum) {
         valueNum++;
@@ -23,16 +27,16 @@ export default class NapoleonHand {
         }
         switch (valueNum) {
             case 1:
-                value = "a";
+                value = "A";
                 break;
             case 11:
-                value = "j";
+                value = "J";
                 break;
             case 12:
-                value = "q";
+                value = "Q";
                 break;
             case 13:
-                value = "k";
+                value = "K";
                 break;
             default:
                 value = String(valueNum);
@@ -45,16 +49,16 @@ export default class NapoleonHand {
     parseValue(value) {
         let valueNum;
         switch (value) {
-            case "a":
+            case "A":
                 valueNum = 1;
                 break;
-            case "j":
+            case "J":
                 valueNum = 11;
                 break;
-            case "q":
+            case "Q":
                 valueNum = 12;
                 break;
-            case "k":
+            case "K":
                 valueNum = 13;
                 break;
             default:
@@ -84,11 +88,20 @@ export default class NapoleonHand {
     }
     hasCard(card) {
         let parsedCard = this.parseCard(card);
+        console.log(parsedCard);
+        console.log(this.cards);
         return this.cards[parsedCard.valueNum - 1][parsedCard.suitNum];
+    }
+    hasOneOfGroup(value) {
+        let valueNum = this.parseValue(value);
+        for (let i = 0; i < 4; ++i) {
+            if (this.cards[valueNum - 1][i]) return true;
+        }
+        return false;
     }
     hasGroup(value) {
         let valueNum = this.parseValue(value);
-        return this.cards[valueNum-1][4];
+        return this.cards[valueNum - 1][4];
     }
     checkAllAreGroups() {
         if (this.size % 4) {
@@ -118,19 +131,19 @@ export default class NapoleonHand {
     }
     removeCard(card) {
         let parsedCard = this.parseCard(card);
-        this.cards[parsedCard.valueNum - 1][parsedCard.suitNum] == false;
+        this.cards[parsedCard.valueNum - 1][parsedCard.suitNum] = false;
         this.size--;
         this.checkAllAreGroups();
     }
     addGroup(value) {
         let valueNum = this.parseValue(value);
-        this.cards[valueNum-1][4] = true;
+        this.cards[valueNum - 1][4] = true;
         this.size += 4;
     }
     removeGroup(value) {
         let valueNum = this.parseValue(value);
         for (let i = 0; i < 5; ++i) {
-            this.cards[valueNum-1][i] = false;
+            this.cards[valueNum - 1][i] = false;
         }
         this.size -= 4;
     }
@@ -150,5 +163,16 @@ export default class NapoleonHand {
             }
         }
         return cardsList;
+    }
+    cardInEnglish(card) {
+        if (this.allAreGroups) {
+            let pluralValues = ["Aces", "Twos", "Threes", "Fours", "Fives", "Sixes", "Sevens", "Eights", "Nines", "Tens", "Jacks", "Queens", "Kings"];
+            let valueNum = this.parseValue(card.value);
+            return `all the ${pluralValues[valueNum - 1]}`;
+        }
+        let values = ["Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King"];
+        let parsedCard = this.parseCard(card);
+        let suits = ["Spades", "Hearts", "Clubs", "Diamonds"];
+        return `${values[parsedCard.valueNum - 1]} of ${suits[parsedCard.suitNum]}`;
     }
 }

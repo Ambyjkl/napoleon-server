@@ -7,10 +7,16 @@ export default class Player {
             size: props.size
         });
         this.lost = false;
+        this.won = false;
     }
     checkDidLose() {
-        let status = this.cards.size === 0;
+        let status = this.hand.size === 0;
         this.lost = status;
+        return status;
+    }
+    checkDidWin() {
+        let status = this.hand.size === 52;
+        this.won = status;
         return status;
     }
 }

@@ -9,6 +9,7 @@ export default class Game {
         let remainder = 52 % numberOfPlayers;
         let quotient = Math.floor(52 / numberOfPlayers);
         this.playerMap = new Map();
+        this.gameLog = ["The game has started"];
         for (let name of players) {
             let cards = [];
             for (let i = 0; i < 13; ++i) {
@@ -41,24 +42,22 @@ export default class Game {
                 cards: cards,
                 size: count
             });
-            for (let i = 0; i < 13; ++i) {
-                nextPlayer.hand.checkIsGroup(i);
-            }
-            nextPlayer.hand.checkAllAreGroups();
-            this.playerMap.add(name, nextPlayer);
+            this.playerMap.set(name, nextPlayer);
         }
     }
     fetchData(playerName) {
-        let player = this.playerMap[playerName];
-        return {
-            players: this.playerMap.keys().filter((player)=> {
-                return !this.playerMap[player].lost;
-            }),
-            myHand: player.hand.showCards(),
+        let player = this.playerMap.get(playerName);
+        let r = {
+            allAreGroups: player.hand.allAreGroups,
             currentPlayer: this.currentPlayerName,
+            gameLog: this.gameLog,
             lost: player.lost,
-            allAreGroups: player.hand.allAreGroups
+            myHand: player.hand.showCards(),
+            players: Array.from(this.playerMap.keys()).filter(player => !this.playerMap.get(player).lost && player != playerName),
+            won: player.won
         };
+        // console.log(r);
+        return r;
     }
     attemptTrade(currentPlayer, targetPlayer, card) {
         if (currentPlayer.hand.allAreGroups) {
@@ -70,21 +69,37 @@ export default class Game {
             return false;
         } else {
             if (targetPlayer.hand.hasCard(card)) {
+                if (!currentPlayer.hand.hasOneOfGroup(card.value)) return false;
                 targetPlayer.hand.removeCard(card);
                 currentPlayer.hand.addCard(card);
+                console.log("saras");
                 return true;
             }
             return false;
         }
     }
     turn(data) {
-        let currentPlayer = this.playerMap[this.currentPlayerName];
-        let targetPlayer = this.playerMap[data.target];
+        if (data.source !== this.currentPlayerName) {
+            console.log(`Detected cheating by ${data.source}`);
+            return;
+        }
+        console.log(`
+        New turn
+        --------
+        `);
+        console.log(data);
+        let currentPlayer = this.playerMap.get(this.currentPlayerName);
+        let targetPlayer = this.playerMap.get(data.target);
         let success = this.attemptTrade(currentPlayer, targetPlayer, data.card);
         if (success) {
             targetPlayer.checkDidLose();
+            currentPlayer.checkDidWin();
+            this.gameLog = [...this.gameLog, `${this.currentPlayerName} took ${targetPlayer.hand.cardInEnglish(data.card)} from ${data.target}!`];
+            // return this.gameLog;
         } else {
+            this.gameLog = [...this.gameLog, `${this.currentPlayerName} tried to take ${targetPlayer.hand.cardInEnglish(data.card)} from ${data.target}, but failed!`];
             this.currentPlayerName = data.target;
+            // return this.gameLog;
         }
     }
 }

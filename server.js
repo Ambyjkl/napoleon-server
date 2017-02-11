@@ -11,34 +11,55 @@ let players = new Map;
 let newGame;
 const syncStatus = (game) => {
     for (let [socket, name] of players) {
+        console.log(name);
         socket.emit("action", {
-            type: "STATUS",
+            type: "UPDATE_STATUS",
             data: game.fetchData(name)
+        });
+        socket.emit("action", {
+            type: "RESET_LOCAL_STATE"
         });
     }
 };
 const io = require("socket.io").listen(server);
 io.sockets.on("connection", (socket) => {
     console.log("We have a new player! " + socket.id);
+    let alreadyStarted = false;
     socket.on("action", (action) => {
         switch (action.type) {
             case "s/ready": {
-                players.add(socket, action.data.name);
+                players.set(socket, action.data);
                 socket.broadcast.emit("action", {
                     type: "ADD_PLAYER",
-                    data: action.data.name
+                    data: action.data
                 });
                 break;
             }
             case "s/start": {
-                newGame = new Game(players.values());
-                io.emit("action", { type: "PREPARE_GAME", data: "gg" });
-                syncStatus(newGame);
+                if (!alreadyStarted) {
+                    alreadyStarted = true;
+                    newGame = new Game(Array.from(players.values()));
+                    io.emit("action", {
+                        type: "PREPARE_GAME",
+                        data: action.data
+                    });
+                    syncStatus(newGame);
+                }
                 break;
             }
             case "s/move": {
                 newGame.turn(action.data);
                 syncStatus(newGame);
+                break;
+            }
+            case "s/message": {
+                socket.broadcast.emit("action", {
+                    type: "NEW_MESSAGE",
+                    data: {
+                        sender: players.get(socket),
+                        content: action.data
+                    }
+                });
             }
         }
     });
@@ -46,3 +67,8 @@ io.sockets.on("connection", (socket) => {
         console.log(socket.id + " disconnected");
     });
 });
+// let ng = new Game(["a", "b"]);
+// ng.fetchData
+// ng.turn({
+//     source: "a"
+// })
