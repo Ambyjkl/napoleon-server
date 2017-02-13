@@ -88,14 +88,14 @@ export default class Game {
     }
     turn(data) {
         if (data.source !== this.currentPlayerName) {
-            console.log(`Detected cheating by ${data.source}`);
-            return;
+            //console.log(`${data.source} tried to cheat by trying to play when it wasn't their turn!`);
+            return false;
         }
-        console.log(`
-        New turn
-        --------
-        `);
-        console.log(data);
+        // console.log(`
+        // New turn
+        // --------
+        // `);
+        // console.log(data);
         const currentPlayer = this.playerMap.get(this.currentPlayerName);
         const targetPlayer = this.playerMap.get(data.target);
         const targetCardName = targetPlayer.hand.cardInEnglish(data.card);
@@ -104,21 +104,21 @@ export default class Game {
             const targetLost = targetPlayer.checkDidLose();
             const sourceWon = currentPlayer.checkDidWin();
             this.gameLog = [...this.gameLog, `${this.currentPlayerName} took ${targetCardName} from ${data.target}! ${targetLost ? `${data.target} lost!` : ""} ${sourceWon ? `${this.currentPlayerName} won!` : ""}`];
-            // return this.gameLog;
         } else {
             if (success === 0) {
                 this.gameLog = [...this.gameLog, `${this.currentPlayerName} tried to take ${targetCardName} from ${data.target}, but failed!`];
-                // return this.gameLog;
+                this.currentPlayerName = data.target;
             } else {
-                this.gameLog = [...this.gameLog, `${this.currentPlayerName} tried to take ${targetCardName} from ${data.target}, but failed! (you need at least one card of that value)`];
+                //this.gameLog = [...this.gameLog, `${this.currentPlayerName} tried to cheat by asking for a card with a value they didn't have!`];
+                return false;
             }
-            this.currentPlayerName = data.target;
         }
-        console.log(`
-        After
-        -----
-        `);
-        console.log("source: ", currentPlayer.fetchData());
-        console.log("target: ", targetPlayer.fetchData());
+        return true;
+        // console.log(`
+        // After
+        // -----
+        // `);
+        // console.log("source: ", currentPlayer.fetchData());
+        // console.log("target: ", targetPlayer.fetchData());
     }
 }

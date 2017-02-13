@@ -48,7 +48,12 @@ io.sockets.on("connection", (socket) => {
                 break;
             }
             case "s/move": {
-                newGame.turn(action.data);
+                const result = newGame.turn(action.data);
+                if (result === false) {
+                    socket.emit("action", {
+                        type: "DETECTED_CHEATING",
+                    });
+                }
                 syncStatus(newGame);
                 break;
             }
